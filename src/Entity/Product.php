@@ -188,5 +188,9 @@ class Product
 
         return $this;
     }
+    public function __toString(): string
+    {
+        return $this->name . ' (Ref: ' . $this->reference . ')';
+    }
 }
 

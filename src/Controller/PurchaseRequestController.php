@@ -20,16 +20,16 @@ final class PurchaseRequestController extends AbstractController
     #[Route(name: 'app_purchase_request_index', methods: ['GET'])]
     public function index(PurchaseRequestRepository $repo): Response
     {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
         $user = $this->getUser();
 
         if ($this->isGranted('ROLE_ADMIN')) {
-            // Admin voit toutes les requests
             $requests = $repo->findAll();
         } elseif ($this->isGranted('ROLE_MANAGER')) {
-            // Manager voit uniquement ses propres demandes
             $requests = $repo->findBy(['requestedBy' => $user]);
         } else {
-            // Magasinier (lecture seule) peut voir toutes les demandes
+            // Magasinier → lecture seule
             $requests = $repo->findAll();
         }
 
@@ -39,18 +39,16 @@ final class PurchaseRequestController extends AbstractController
     }
 
     // ======================
-    // CREATE NEW
+    // CREATE
     // ======================
     #[Route('/new', name: 'app_purchase_request_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
-        $user = $this->getUser();
-
-        // Seul un Manager peut créer une PurchaseRequest
+        // ✅ Admin & Manager seulement
         $this->denyAccessUnlessGranted('ROLE_MANAGER');
 
         $purchaseRequest = new PurchaseRequest();
-        $purchaseRequest->setRequestedBy($user);
+        $purchaseRequest->setRequestedBy($this->getUser());
 
         $form = $this->createForm(PurchaseRequestType::class, $purchaseRequest);
         $form->handleRequest($request);
@@ -59,11 +57,10 @@ final class PurchaseRequestController extends AbstractController
             $entityManager->persist($purchaseRequest);
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_purchase_request_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_purchase_request_index');
         }
 
         return $this->render('purchase_request/new.html.twig', [
-            'purchase_request' => $purchaseRequest,
             'form' => $form,
         ]);
     }
@@ -74,7 +71,8 @@ final class PurchaseRequestController extends AbstractController
     #[Route('/{id}', name: 'app_purchase_request_show', methods: ['GET'])]
     public function show(PurchaseRequest $purchaseRequest): Response
     {
-        // Tout le monde peut voir
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
         return $this->render('purchase_request/show.html.twig', [
             'purchase_request' => $purchaseRequest,
         ]);
@@ -86,11 +84,14 @@ final class PurchaseRequestController extends AbstractController
     #[Route('/{id}/edit', name: 'app_purchase_request_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, PurchaseRequest $purchaseRequest, EntityManagerInterface $entityManager): Response
     {
-        $user = $this->getUser();
+        $this->denyAccessUnlessGranted('ROLE_MANAGER');
 
-        // Seul Admin ou le Manager qui a créé la request peut modifier
-        if (!$this->isGranted('ROLE_ADMIN') && $purchaseRequest->getRequestedBy() !== $user) {
-            throw $this->createAccessDeniedException('Vous ne pouvez pas modifier cette demande.');
+        // ❌ Manager ne peut modifier que ses propres demandes
+        if (
+            !$this->isGranted('ROLE_ADMIN') &&
+            $purchaseRequest->getRequestedBy() !== $this->getUser()
+        ) {
+            throw $this->createAccessDeniedException('Accès refusé.');
         }
 
         $form = $this->createForm(PurchaseRequestType::class, $purchaseRequest);
@@ -99,12 +100,12 @@ final class PurchaseRequestController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_purchase_request_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_purchase_request_index');
         }
 
         return $this->render('purchase_request/edit.html.twig', [
-            'purchase_request' => $purchaseRequest,
             'form' => $form,
+            'purchase_request' => $purchaseRequest,
         ]);
     }
 
@@ -114,11 +115,13 @@ final class PurchaseRequestController extends AbstractController
     #[Route('/{id}', name: 'app_purchase_request_delete', methods: ['POST'])]
     public function delete(Request $request, PurchaseRequest $purchaseRequest, EntityManagerInterface $entityManager): Response
     {
-        $user = $this->getUser();
+        $this->denyAccessUnlessGranted('ROLE_MANAGER');
 
-        // Seul Admin ou le Manager qui a créé la request peut supprimer
-        if (!$this->isGranted('ROLE_ADMIN') && $purchaseRequest->getRequestedBy() !== $user) {
-            throw $this->createAccessDeniedException('Vous ne pouvez pas supprimer cette demande.');
+        if (
+            !$this->isGranted('ROLE_ADMIN') &&
+            $purchaseRequest->getRequestedBy() !== $this->getUser()
+        ) {
+            throw $this->createAccessDeniedException('Accès refusé.');
         }
 
         if ($this->isCsrfTokenValid('delete'.$purchaseRequest->getId(), $request->request->get('_token'))) {
@@ -126,6 +129,75 @@ final class PurchaseRequestController extends AbstractController
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_purchase_request_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_purchase_request_index');
+    }
+    
+    // ======================
+    // WORKFLOW: APPROVE
+    // ======================
+    #[Route('/{id}/approve', name: 'app_purchase_request_approve', methods: ['POST'])]
+    public function approve(Request $request, PurchaseRequest $purchaseRequest, EntityManagerInterface $entityManager): Response
+    {
+        // 🔒 Seul l'Admin peut valider
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        // 1. Vérifier qu'on ne valide pas deux fois
+        if ($purchaseRequest->getStatus() !== 'pending') {
+            $this->addFlash('warning', 'Cette demande a déjà été traitée.');
+            return $this->redirectToRoute('app_purchase_request_index');
+        }
+
+        // 2. Vérification CSRF (Sécurité bouton)
+        if ($this->isCsrfTokenValid('approve'.$purchaseRequest->getId(), $request->request->get('_token'))) {
+            
+            // A. Changer le statut
+            $purchaseRequest->setStatus('approved');
+
+            // B. Mettre à jour le Stock du Produit
+            $product = $purchaseRequest->getProduct();
+            $newQuantity = $product->getQuantity() + $purchaseRequest->getQuantity();
+            $product->setQuantity($newQuantity);
+
+            // C. Créer le Mouvement de Stock (Traçabilité)
+            // Assure-toi d'avoir importé l'entité StockMovement en haut du fichier !
+            $movement = new \App\Entity\StockMovement();
+            $movement->setProduct($product);
+            $movement->setQuantity($purchaseRequest->getQuantity());
+            $movement->setType('IN'); // Entrée de stock
+            $movement->setCreatedAt(new \DateTimeImmutable());
+            
+            // Si tu as ajouté une relation User dans StockMovement, décommente la ligne ci-dessous :
+            // $movement->setUser($this->getUser()); 
+
+            $entityManager->persist($movement);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Demande approuvée : Stock mis à jour !');
+        }
+
+        return $this->redirectToRoute('app_purchase_request_index');
+    }
+
+    // ======================
+    // WORKFLOW: REJECT
+    // ======================
+    #[Route('/{id}/reject', name: 'app_purchase_request_reject', methods: ['POST'])]
+    public function reject(Request $request, PurchaseRequest $purchaseRequest, EntityManagerInterface $entityManager): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        if ($purchaseRequest->getStatus() !== 'pending') {
+            $this->addFlash('warning', 'Cette demande a déjà été traitée.');
+            return $this->redirectToRoute('app_purchase_request_index');
+        }
+
+        if ($this->isCsrfTokenValid('reject'.$purchaseRequest->getId(), $request->request->get('_token'))) {
+            $purchaseRequest->setStatus('rejected');
+            $entityManager->flush();
+            
+            $this->addFlash('danger', 'Demande refusée.');
+        }
+
+        return $this->redirectToRoute('app_purchase_request_index');
     }
 }

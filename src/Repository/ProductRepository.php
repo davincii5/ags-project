@@ -16,28 +16,31 @@ class ProductRepository extends ServiceEntityRepository
         parent::__construct($registry, Product::class);
     }
 
-    //    /**
-    //     * @return Product[] Returns an array of Product objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('p.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * Trouve les produits dont le stock est inférieur ou égal au seuil d'alerte
+     * @return Product[]
+     */
+    public function findLowStockProducts(): array
+    {
+        return $this->createQueryBuilder('p')
+            // On compare la quantité actuelle au seuil défini pour chaque produit
+            ->andWhere('p.quantity <= p.alertThreshold')
+            // On trie par quantité croissante (les stocks à 0 en premier)
+            ->orderBy('p.quantity', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 
-    //    public function findOneBySomeField($value): ?Product
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /**
+     * (Optionnel) Trouve les produits les plus chers pour l'analyse de stock
+     * @return Product[]
+     */
+    public function findMostExpensiveProducts(int $limit = 5): array
+    {
+        return $this->createQueryBuilder('p')
+            ->orderBy('p.purchasePrice', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 }
