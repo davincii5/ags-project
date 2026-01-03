@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New PurchaseRequest{% endblock %}
+
+{% block body %}
+    <h1>Create new PurchaseRequest</h1>
+
+    {{ include('purchase_request/_form.html.twig') }}
+
+    <a href="{{ path('app_purchase_request_index') }}">back to list</a>
+{% endblock %}
