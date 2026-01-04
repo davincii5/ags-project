@@ -1,5 +1,6 @@
 {% extends 'base.html.twig' %}
 
+<<<<<<< HEAD
 {% block body %}
     <h2 class="fw-bold mb-4">Tableau de bord décisionnel</h2>
 
@@ -57,10 +58,48 @@
                 </div>
                 <p class="text-muted small mb-3">Stock dormant détecté (aucune sortie depuis 30 jours).</p>
                 <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold">Détails</button>
+=======
+{% block title %}Tableau de Bord Administrateur{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1 class="mb-4">📊 Tableau de Bord Décisionnel</h1>
+
+    {# === SECTION 1 : LES CHIFFRES CLÉS (KPIS) === #}
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-danger mb-3">
+                <div class="card-header">⚠️ Ruptures potentielles</div>
+                <div class="card-body">
+                    <h2 class="card-title">{{ low_stock_products|length }}</h2>
+                    <p class="card-text">Produits sous le seuil d'alerte.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">⏳ Demandes en attente</div>
+                <div class="card-body">
+                    <h2 class="card-title">{{ pending_count }}</h2>
+                    <p class="card-text">Demandes à valider.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">💰 Valeur du Stock</div>
+                <div class="card-body">
+                    <h2 class="card-title">{{ total_stock_value|number_format(2, ',', ' ') }} MAD</h2>
+                    <p class="card-text">Valeur d'achat totale.</p>
+                </div>
+>>>>>>> 468894121f6e69ae602c641ed085bd24960cddb3
             </div>
         </div>
     </div>
 
+<<<<<<< HEAD
     <div class="row g-4">
         <div class="col-md-8">
             <div class="card p-4 border-0 shadow-sm bg-white">
@@ -94,4 +133,63 @@
         });
     }
 </script>
+=======
+    {# === SECTION 2 : AIDE A LA DÉCISION (TABLEAU) === #}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <strong>🚨 Produits à commander d'urgence</strong>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Référence</th>
+                                <th>Stock Actuel</th>
+                                <th>Seuil Alerte</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for p in low_stock_products %}
+                            <tr>
+                                <td>{{ p.name }}</td>
+                                <td>{{ p.reference }}</td>
+                                <td class="fw-bold text-danger">{{ p.quantity }}</td>
+                                <td>{{ p.alertThreshold }}</td>
+                                <td>
+                                    <a href="{{ path('app_purchase_request_new') }}" class="btn btn-sm btn-outline-danger">Commander</a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-3">✅ Aucun stock critique. Tout va bien.</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    Dernières validées
+                </div>
+                <ul class="list-group list-group-flush">
+                {% for req in last_approved %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ req.product.name }}
+                        <span class="badge bg-success rounded-pill">+{{ req.quantity }}</span>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+>>>>>>> 468894121f6e69ae602c641ed085bd24960cddb3
 {% endblock %}

@@ -3,12 +3,14 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use App\Entity\PurchaseRequest;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -21,110 +23,97 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     /**
-     * @var list<string> The user roles
+     * @var array<string> The user roles
      */
-    #[ORM\Column]
+    #[ORM\Column(type: 'json')]
     private array $roles = [];
 
-    /**
-     * @var string The hashed password
-     */
     #[ORM\Column]
     private ?string $password = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $aymane = null;
-
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): static
-    {
-        $this->email = $email;
-
-        return $this;
-    }
+    #[ORM\Column(type: 'datetime_immutable')]
+    private ?\DateTimeImmutable $createdAt = null;
 
     /**
-     * A visual identifier that represents this user.
-     *
-     * @see UserInterface
+     * @var Collection<int, PurchaseRequest>
      */
-    public function getUserIdentifier(): string
+    #[ORM\OneToMany(mappedBy: 'requestedBy', targetEntity: PurchaseRequest::class)]
+    private Collection $purchaseRequests;
+
+    public function __construct()
     {
-        return (string) $this->email;
+        $this->createdAt = new \DateTimeImmutable();
+        $this->purchaseRequests = new ArrayCollection();
+        $this->roles = []; // toujours initialisé
     }
 
-    /**
-     * @see UserInterface
-     */
+    // ========================
+    // Basic getters / setters
+    // ========================
+    public function getId(): ?int { return $this->id; }
+    public function getEmail(): ?string { return $this->email; }
+    public function setEmail(string $email): static { $this->email = $email; return $this; }
+
+    public function getCreatedAt(): ?\DateTimeImmutable { return $this->createdAt; }
+
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
-        $roles[] = 'ROLE_USER';
-
+        // au moins un rôle par défaut pour chaque utilisateur
+        $roles[] = 'ROLE_STOREKEEPER';
         return array_unique($roles);
     }
 
-    /**
-     * @param list<string> $roles
-     */
-    public function setRoles(array $roles): static
-    {
-        $this->roles = $roles;
+    public function setRoles(array $roles): static { $this->roles = $roles; return $this; }
+    public function getPassword(): ?string { return $this->password; }
+    public function setPassword(string $password): static { $this->password = $password; return $this; }
 
-        return $this;
-    }
+    public function getUserIdentifier(): string { return (string) $this->email; }
+    #[\Deprecated] public function eraseCredentials(): void {}
 
-    /**
-     * @see PasswordAuthenticatedUserInterface
-     */
-    public function getPassword(): ?string
-    {
-        return $this->password;
-    }
-
-    public function setPassword(string $password): static
-    {
-        $this->password = $password;
-
-        return $this;
-    }
-
-    /**
-     * Ensure the session doesn't contain actual password hashes by CRC32C-hashing them, as supported since Symfony 7.3.
-     */
     public function __serialize(): array
     {
         $data = (array) $this;
         $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
-
         return $data;
     }
 
-    #[\Deprecated]
-    public function eraseCredentials(): void
-    {
-        // @deprecated, to be removed when upgrading to Symfony 8
-    }
+    // ========================
+    // PurchaseRequests relation
+    // ========================
+    public function getPurchaseRequests(): Collection { return $this->purchaseRequests; }
 
-    public function getAymane(): ?string
+    public function addPurchaseRequest(PurchaseRequest $purchaseRequest): static
     {
-        return $this->aymane;
-    }
-
-    public function setAymane(string $aymane): static
-    {
-        $this->aymane = $aymane;
-
+        if (!$this->purchaseRequests->contains($purchaseRequest)) {
+            $this->purchaseRequests->add($purchaseRequest);
+            $purchaseRequest->setRequestedBy($this);
+        }
         return $this;
+    }
+
+    public function removePurchaseRequest(PurchaseRequest $purchaseRequest): static
+    {
+        if ($this->purchaseRequests->removeElement($purchaseRequest)) {
+            if ($purchaseRequest->getRequestedBy() === $this) {
+                $purchaseRequest->setRequestedBy(null);
+            }
+        }
+        return $this;
+    }
+
+    // ========================
+    // Role helpers
+    // ========================
+    public function isAdmin(): bool {
+        return in_array('ROLE_ADMIN', $this->getRoles() ?: [], true);
+    }
+
+    public function isManager(): bool {
+        return in_array('ROLE_MANAGER', $this->getRoles() ?: [], true);
+    }
+
+    public function isStorekeeper(): bool {
+        return in_array('ROLE_STOREKEEPER', $this->getRoles() ?: [], true);
     }
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # config/packages/twig.yaml
 twig:
     # Chemin par défaut pour les templates
@@ -7,6 +8,11 @@ twig:
     file_name_pattern: '*.twig'
 
 # Configuration spécifique pour l'environnement "test"
+=======
+twig:
+    file_name_pattern: '*.twig'
+
+>>>>>>> 468894121f6e69ae602c641ed085bd24960cddb3
 when@test:
     twig:
         strict_variables: true

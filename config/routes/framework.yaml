@@ -1,3 +1,10 @@
+<<<<<<< HEAD
 controllers:
     resource: ../../src/Controller/
     type: attribute
+=======
+when@dev:
+    _errors:
+        resource: '@FrameworkBundle/Resources/config/routing/errors.php'
+        prefix: /_error
+>>>>>>> 468894121f6e69ae602c641ed085bd24960cddb3

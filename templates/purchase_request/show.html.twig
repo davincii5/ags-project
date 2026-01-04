@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}PurchaseRequest{% endblock %}
+
+{% block body %}
+    <h1>PurchaseRequest</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ purchase_request.id }}</td>
+            </tr>
+            <tr>
+                <th>Quantity</th>
+                <td>{{ purchase_request.quantity }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{{ purchase_request.status }}</td>
+            </tr>
+            <tr>
+                <th>Justification</th>
+                <td>{{ purchase_request.justification }}</td>
+            </tr>
+            <tr>
+                <th>CreatedAt</th>
+                <td>{{ purchase_request.createdAt ? purchase_request.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_purchase_request_index') }}">back to list</a>
+
+    <a href="{{ path('app_purchase_request_edit', {'id': purchase_request.id}) }}">edit</a>
+
+    {{ include('purchase_request/_delete_form.html.twig') }}
+{% endblock %}

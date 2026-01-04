@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}StockMovement index{% endblock %}
+
+{% block body %}
+    <h1>StockMovement index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Quantity</th>
+                <th>Type</th>
+                <th>CreatedAt</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for stock_movement in stock_movements %}
+            <tr>
+                <td>{{ stock_movement.id }}</td>
+                <td>{{ stock_movement.quantity }}</td>
+                <td>{{ stock_movement.type }}</td>
+                <td>{{ stock_movement.createdAt ? stock_movement.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_stock_movement_show', {'id': stock_movement.id}) }}">show</a>
+                    <a href="{{ path('app_stock_movement_edit', {'id': stock_movement.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_stock_movement_new') }}">Create new</a>
+{% endblock %}
