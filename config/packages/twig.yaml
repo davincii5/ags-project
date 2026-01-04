@@ -1,0 +1,12 @@
+# config/packages/twig.yaml
+twig:
+    # Chemin par défaut pour les templates
+    default_path: '%kernel.project_dir%/templates'
+
+    # Optionnel : motif des fichiers Twig
+    file_name_pattern: '*.twig'
+
+# Configuration spécifique pour l'environnement "test"
+when@test:
+    twig:
+        strict_variables: true

@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark">Traçabilité</h2>
+        <p class="text-muted">Historique des mouvements de stock et actions utilisateurs</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card p-4 text-white shadow-sm border-0" style="background: #5a4fcf;">
+                <small class="text-uppercase fw-bold opacity-75" style="font-size: 0.7rem;">Logs total</small>
+                <h3 class="fw-bold mb-0">1,284</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm overflow-hidden bg-white">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4 py-3 text-muted small fw-bold">HORODATAGE</th>
+                        <th class="py-3 text-muted small fw-bold">UTILISATEUR</th>
+                        <th class="py-3 text-muted small fw-bold">ACTION</th>
+                        <th class="pe-4 py-3 text-muted small fw-bold">DÉTAILS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="ps-4 text-muted small">04/01/2026 10:45</td>
+                        <td class="fw-bold">Ouvrier_Matin</td>
+                        <td><span class="text-success fw-bold">ENTRÉE</span></td>
+                        <td class="pe-4 text-muted small">Ajout de 50 "MacBook Air" au stock principal.</td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4 text-muted small">04/01/2026 09:12</td>
+                        <td class="fw-bold">Admin</td>
+                        <td><span class="text-warning fw-bold">MODIF</span></td>
+                        <td class="pe-4 text-muted small">Changement du prix unitaire de "iPhone 13 Pro".</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

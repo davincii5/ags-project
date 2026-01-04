@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h2 class="fw-bold mb-4">Tableau de bord décisionnel</h2>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card p-4 shadow-sm text-white" style="background: #5a4fcf;">
+                <small class="text-uppercase fw-bold opacity-75" style="font-size: 0.7rem;">Stock total</small>
+                <h3 class="fw-bold mb-0">366</h3> </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4 shadow-sm text-white" style="background: #4b38b3;">
+                <small class="text-uppercase fw-bold opacity-75" style="font-size: 0.7rem;">Valeur stock</small>
+                <h3 class="fw-bold mb-0">54 852 €</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4 shadow-sm text-white" style="background: #6358dc;">
+                <small class="text-uppercase fw-bold opacity-75" style="font-size: 0.7rem;">Total entrées</small>
+                <h3 class="fw-bold mb-0">992</h3> </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4 shadow-sm text-white" style="background: #5247cc;">
+                <small class="text-uppercase fw-bold opacity-75" style="font-size: 0.7rem;">Total sorties</small>
+                <h3 class="fw-bold mb-0">702</h3> </div>
+        </div>
+    </div>
+
+    <h5 class="fw-bold mb-3"><i class="bi bi-lightbulb-fill text-warning me-2"></i>Aide à la décision</h5>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card p-4 h-100 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-bold">iPhone 13 Pro</span>
+                    <span class="badge bg-success-subtle text-success border border-success px-3">Rentable</span>
+                </div>
+                <p class="text-muted small mb-3">Vitesse d'écoulement élevée. Fortement suggéré de racheter.</p>
+                <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold">Commander</button>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 h-100 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-bold">Nintendo Switch</span>
+                    <span class="badge bg-warning-subtle text-warning border border-warning px-3">Stock faible</span>
+                </div>
+                <p class="text-muted small mb-3">Quantité proche du seuil critique. Réapprovisionner bientôt.</p>
+                <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold">Commander</button>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 h-100 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-bold">Cuisinière Candy</span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger px-3">Risqué</span>
+                </div>
+                <p class="text-muted small mb-3">Stock dormant détecté (aucune sortie depuis 30 jours).</p>
+                <button class="btn btn-primary w-100 rounded-pill py-2 fw-bold">Détails</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card p-4 border-0 shadow-sm bg-white">
+                <h6 class="fw-bold mb-4 text-muted">Évolution mensuelle des flux</h6>
+                <div id="chart_evo" style="height: 250px;"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 border-0 shadow-sm bg-white">
+                <h6 class="fw-bold mb-4 text-muted">Répartition par Catégorie</h6>
+                <div id="chart_cat" style="height: 250px;"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(draw);
+    function draw() {
+        // Graphique Evolution (AreaChart)
+        var aData = google.visualization.arrayToDataTable([['Mois', 'Entrées', 'Sorties'], ['Jan', 400, 200], ['Fév', 460, 250], ['Mar', 800, 300], ['Avr', 600, 350]]);
+        new google.visualization.AreaChart(document.getElementById('chart_evo')).draw(aData, { 
+            legend: {position: 'top'}, colors: ['#5a4fcf', '#f43f5e'], areaOpacity: 0.1, 
+            chartArea: {width: '90%', height: '70%'} 
+        });
+        
+        // Graphique Catégories (Donut)
+        var dData = google.visualization.arrayToDataTable([['C', 'V'], ['Smartphone', 40], ['Électro', 30], ['Consoles', 30]]);
+        new google.visualization.PieChart(document.getElementById('chart_cat')).draw(dData, { 
+            pieHole: 0.7, colors: ['#5a4fcf', '#ffca28', '#8b5cf6'], legend: 'bottom' 
+        });
+    }
+</script>
+{% endblock %}
